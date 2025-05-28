@@ -581,7 +581,7 @@ public class Actions extends Thread {
                 String clientId = (String) in.readObject();
                 MapReduceRequest request = (MapReduceRequest) in.readObject();
 
-                Map<String, ArrayList<Store>> allResults = new HashMap<>();
+                ArrayList<Store> allStoresFromWorkers = new ArrayList<>();
 
                 for (int i = 0; i < workers.length; i++) { // for all workers
                     Socket workerSocket = null;
@@ -611,8 +611,9 @@ public class Actions extends Thread {
                         responseId = (String) inWorker.readObject();
                         ArrayList<Store> partialResult = (ArrayList<Store>) inWorker.readObject();
 
-                        // Χρήση του responseId ως κλειδί
-                        allResults.put(responseId, partialResult);
+                        if (partialResult != null && clientId.equals(responseId)) { // Ensure clientId matches and result is not null
+                            allStoresFromWorkers.addAll(partialResult);
+                        }
 
                     } catch (IOException | ClassNotFoundException e) {
                         e.printStackTrace();
@@ -645,23 +646,21 @@ public class Actions extends Thread {
                     outReducer.writeObject(clientId);
                     outReducer.flush();
 
-                    outReducer.writeObject(allResults.size()); // Στέλνουμε το μέγεθος του map
+                    outReducer.writeObject(1); // Sending 1 as we are sending one consolidated batch
                     outReducer.flush();
 
-                    for(Map.Entry<String, ArrayList<Store>> partial : allResults.entrySet()){
-                        outReducer.writeObject(partial.getKey());
-                        outReducer.flush();
+                    outReducer.writeObject(clientId); // Send clientId as the requestIdFromMaster for the batch
+                    outReducer.flush();
 
-                        outReducer.writeObject(partial.getValue());
-                        outReducer.flush();
-                    }
+                    outReducer.writeObject(allStoresFromWorkers); // Send the consolidated list
+                    outReducer.flush();
 
                     // Receive from reducer
-                    clientId = (String) inReducer.readObject();
+                    String overallClientId = (String) inReducer.readObject(); // Renamed for clarity
                     ArrayList<Store> finalResult = (ArrayList<Store>) inReducer.readObject();
 
                     // Send to client
-                    out.writeObject(clientId);
+                    out.writeObject(overallClientId);
                     out.flush();
 
                     out.writeObject(finalResult);
@@ -678,15 +677,14 @@ public class Actions extends Thread {
                         ioException.printStackTrace();
                     }
                 }
-            }
-            else if (role.equals("client")) {
+            } else if (role.equals("filter")) {
                 String responseId = null;
 
                 // Receive from client
                 String clientId = (String) in.readObject();
                 MapReduceRequest request = (MapReduceRequest) in.readObject();
 
-                Map<String, ArrayList<Store>> allResults = new HashMap<>();
+                ArrayList<Store> allStoresFromWorkers = new ArrayList<>();
 
                 for (int i = 0; i < workers.length; i++) { // for all workers
                     Socket workerSocket = null;
@@ -703,7 +701,7 @@ public class Actions extends Thread {
                         inWorker = new ObjectInputStream(workerSocket.getInputStream());
 
                         // Send to worker
-                        outWorker.writeObject("client");
+                        outWorker.writeObject("filter"); // Send "filter" role to worker
                         outWorker.flush();
 
                         outWorker.writeObject(clientId);
@@ -716,8 +714,9 @@ public class Actions extends Thread {
                         responseId = (String) inWorker.readObject();
                         ArrayList<Store> partialResult = (ArrayList<Store>) inWorker.readObject();
 
-                        // Χρήση του responseId ως κλειδί
-                        allResults.put(responseId, partialResult);
+                        if (partialResult != null && clientId.equals(responseId)) { // Ensure clientId matches and result is not null
+                            allStoresFromWorkers.addAll(partialResult);
+                        }
 
                     } catch (IOException | ClassNotFoundException e) {
                         e.printStackTrace();
@@ -732,7 +731,7 @@ public class Actions extends Thread {
                     }
                 }
 
-                // Στέλνουμε όλα τα αποτελέσματα στον reducer
+                // Send all results to the reducer
                 Socket reducerSocket = null;
                 ObjectOutputStream outReducer = null;
                 ObjectInputStream inReducer = null;
@@ -744,29 +743,27 @@ public class Actions extends Thread {
                     inReducer = new ObjectInputStream(reducerSocket.getInputStream());
 
                     // Send to reducer
-                    outReducer.writeObject("client");
+                    outReducer.writeObject("filter"); // Send "filter" role to reducer
                     outReducer.flush();
 
                     outReducer.writeObject(clientId);
                     outReducer.flush();
 
-                    outReducer.writeObject(allResults.size()); // Στέλνουμε το μέγεθος του map
+                    outReducer.writeObject(1); // Sending 1 as we are sending one consolidated batch
                     outReducer.flush();
 
-                    for(Map.Entry<String, ArrayList<Store>> partial : allResults.entrySet()){
-                        outReducer.writeObject(partial.getKey());
-                        outReducer.flush();
+                    outReducer.writeObject(clientId); // Send clientId as the requestIdFromMaster for the batch
+                    outReducer.flush();
 
-                        outReducer.writeObject(partial.getValue());
-                        outReducer.flush();
-                    }
+                    outReducer.writeObject(allStoresFromWorkers); // Send the consolidated list
+                    outReducer.flush();
 
                     // Receive from reducer
-                    clientId = (String) inReducer.readObject();
+                    String overallClientId = (String) inReducer.readObject(); // Renamed for clarity
                     ArrayList<Store> finalResult = (ArrayList<Store>) inReducer.readObject();
 
                     // Send to client
-                    out.writeObject(clientId);
+                    out.writeObject(overallClientId);
                     out.flush();
 
                     out.writeObject(finalResult);
@@ -783,8 +780,7 @@ public class Actions extends Thread {
                         ioException.printStackTrace();
                     }
                 }
-            }
-            else if (role.equals("fetchProducts")) {
+            } else if (role.equals("fetchProducts")) {
 
                 String responseId = null;
 
