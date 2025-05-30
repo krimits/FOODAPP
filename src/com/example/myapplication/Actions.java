@@ -56,7 +56,7 @@ public class Actions extends Thread {
                         // Read from worker
                         String response = (String) inWorker.readObject();
 
-                        if ("Store added successfully".equals(response)) {
+                        if ("Store added successfully" .equals(response)) {
                             successCount++;
                         }
 
@@ -82,7 +82,7 @@ public class Actions extends Thread {
                 out.flush();
 
 
-            }else if (role.equals("findStore")) {
+            } else if (role.equals("findStore")) {
                 // Receive from manager
                 String storeName = (String) in.readObject(); // Get store name to find the object store
 
@@ -128,7 +128,7 @@ public class Actions extends Thread {
                     }
                 }
 
-            }else if (role.equals("findProduct")) {
+            } else if (role.equals("findProduct")) {
                 // Receive from manager
                 String storeName = (String) in.readObject();
                 String ProductName = (String) in.readObject();
@@ -176,7 +176,7 @@ public class Actions extends Thread {
                         e.printStackTrace();
                     }
                 }
-            }else if (role.equals("findProduct2")) {
+            } else if (role.equals("findProduct2")) {
                 // Receive from manager
                 String storeName = (String) in.readObject();
                 String ProductName = (String) in.readObject();
@@ -224,7 +224,7 @@ public class Actions extends Thread {
                         e.printStackTrace();
                     }
                 }
-            }else if (role.equals("AmountInc")) {
+            } else if (role.equals("AmountInc")) {
                 // Receive from manager
                 String storeName = (String) in.readObject();
                 String ProductName = (String) in.readObject();
@@ -277,7 +277,7 @@ public class Actions extends Thread {
                     }
                 }
 
-            }else if (role.equals("NewProduct")) {
+            } else if (role.equals("NewProduct")) {
                 // Receive from manager
                 String storeName = (String) in.readObject();
                 Product pro = (Product) in.readObject();
@@ -326,7 +326,7 @@ public class Actions extends Thread {
                     }
                 }
 
-            }else if (role.equals("remove")) {
+            } else if (role.equals("remove")) {
                 // Receive from manager
                 String storeName = (String) in.readObject();
                 String productName = (String) in.readObject();
@@ -375,7 +375,7 @@ public class Actions extends Thread {
                     }
                 }
 
-            }else if (role.equals("AmountDec")) {
+            } else if (role.equals("AmountDec")) {
                 // Receive from manager
                 String storeName = (String) in.readObject();
                 String ProductName = (String) in.readObject();
@@ -429,7 +429,7 @@ public class Actions extends Thread {
                 }
 
 
-            }else if (role.equals("storeType")) {
+            } else if (role.equals("storeType")) {
                 // Receive from manager
                 String storeType = (String) in.readObject();  // e.g., "pizzeria"
 
@@ -502,7 +502,7 @@ public class Actions extends Thread {
                 reducerSocket.close();
 
 
-            }else if (role.equals("productCategory")) {
+            } else if (role.equals("productCategory")) {
                 // Read from manager
                 String productCategory = (String) in.readObject(); // e.g., "pizza"
 
@@ -574,7 +574,7 @@ public class Actions extends Thread {
                 inReducer.close();
                 reducerSocket.close();
 
-            }else if (role.equals("client")) {
+            } else if (role.equals("client")) {
                 String responseId = null;
 
                 // Receive from client
@@ -841,7 +841,7 @@ public class Actions extends Thread {
                 out.flush();
 
 
-            }else if (role.equals("purchase")) {
+            } else if (role.equals("purchase")) {
 
                 String responseId = null;
 
@@ -906,7 +906,7 @@ public class Actions extends Thread {
                 out.flush();
 
 
-            }else if (role.equals("rate")) {
+            } else if (role.equals("rate")) {
 
                 String responseId = null;
 
@@ -967,6 +967,54 @@ public class Actions extends Thread {
                 out.flush();
                 out.writeObject(results);
                 out.flush();
+            } else if (role.equals("customerPurchasesByStore")) {
+                // Receive from client
+                String customerName = (String) in.readObject();
+                String storeName = (String) in.readObject();
+
+                // Βρες σε ποιον worker ανήκει το κατάστημα
+                int workerId = Math.abs(storeName.hashCode()) % workers.length;
+                String workerIP = workers[workerId][0];
+                int workerPort = Integer.parseInt(workers[workerId][1]);
+
+                Socket workerSocket = null;
+                ObjectOutputStream outWorker = null;
+                ObjectInputStream inWorker = null;
+
+                try {
+                    // Connect to the worker
+                    workerSocket = new Socket(workerIP, workerPort);
+                    outWorker = new ObjectOutputStream(workerSocket.getOutputStream());
+                    inWorker = new ObjectInputStream(workerSocket.getInputStream());
+
+                    // Send to worker
+                    outWorker.writeObject("customerPurchasesByStore");
+                    outWorker.flush();
+
+                    outWorker.writeObject(customerName);
+                    outWorker.flush();
+
+                    outWorker.writeObject(storeName);
+                    outWorker.flush();
+
+                    // Receive from worker
+                    Map<String, Integer> result = (Map<String, Integer>) inWorker.readObject();
+
+                    // Send to client
+                    out.writeObject(result);
+                    out.flush();
+
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                } finally {
+                    try {
+                        if (inWorker != null) inWorker.close();
+                        if (outWorker != null) outWorker.close();
+                        if (workerSocket != null) workerSocket.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
 
         } catch (IOException | ClassNotFoundException e) {
