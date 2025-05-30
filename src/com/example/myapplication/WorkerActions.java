@@ -299,6 +299,9 @@ public class WorkerActions extends Thread {
                     }
                 }
 
+                // Add diagnostic store
+                result.add(new Store("DiagnosticStore_Worker", 0.0, 0.0, "DIAGNOSTIC", 0, 0, "diag.png", new ArrayList<Product>()));
+
                 // Send to master
                 out.writeObject(clientId);
                 out.flush();
@@ -334,6 +337,9 @@ public class WorkerActions extends Thread {
                         }
                     }
                 }
+
+                // Add diagnostic store
+                result.add(new Store("DiagnosticStore_Worker", 0.0, 0.0, "DIAGNOSTIC", 0, 0, "diag.png", new ArrayList<Product>()));
 
                 // Send to master
                 out.writeObject(clientId);
