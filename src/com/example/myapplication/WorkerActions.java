@@ -4,7 +4,8 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class WorkerActions extends Thread {
+public class
+WorkerActions extends Thread {
     ObjectInputStream in;
     ObjectOutputStream out;
     private final ArrayList<Store> stores;
@@ -487,6 +488,46 @@ public class WorkerActions extends Thread {
                 }
             }
 
+            else if (role.equals("customerPurchasesByStore")) {
+                // Receive from master
+                String customerName = (String) in.readObject();
+                String storeName = (String) in.readObject();
+
+                Map<String, Integer> customerPurchases = new HashMap<>();
+
+                synchronized (lock) {
+                    // Βρες το κατάστημα
+                    Store targetStore = null;
+                    for (Store store : stores) {
+                        if (store.getStoreName().equalsIgnoreCase(storeName)) {
+                            targetStore = store;
+                            break;
+                        }
+                    }
+
+                    if (targetStore != null) {
+                        // Πέρασε από όλες τις αγορές του καταστήματος
+                        for (Purchase purchase : targetStore.getPurchases()) {
+                            // Έλεγξε αν η αγορά είναι από τον συγκεκριμένο πελάτη
+                            if (purchase.getCustomerName().equalsIgnoreCase(customerName)) {
+                                // Πρόσθεσε τα προϊόντα στο map
+                                for (Product product : purchase.getPurchasedProducts()) {
+                                    String productName = product.getName();
+                                    int quantity = product.getQuantity();
+
+                                    // Αν το προϊόν υπάρχει ήδη στο map, πρόσθεσε την ποσότητα
+                                    customerPurchases.merge(productName, quantity, Integer::sum);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Send to master
+                out.writeObject(customerPurchases);
+                out.flush();
+            }
+
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         } finally {
@@ -498,5 +539,4 @@ public class WorkerActions extends Thread {
                 e.printStackTrace();
             }
         }
-    }
-}
+    }}
