@@ -12,6 +12,7 @@ import java.text.ParseException;
 import java.util.*;
 
 public class Manager {
+    @SuppressWarnings("unchecked")
     public static void main(String[] args) throws ParseException, FileNotFoundException {
         Scanner sc = new Scanner(System.in);
 

@@ -2,6 +2,7 @@ package com.example.myapplication;
 import java.io.Serializable;
 
 public class Product implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String name;
     private String category;
     private double price;
