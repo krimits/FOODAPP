@@ -25,7 +25,8 @@ public class Manager {
             System.out.println("3.Remove Product");
             System.out.println("4.Total sales by store type");
             System.out.println("5.Total sales by product category");
-            System.out.println("6.Exit");
+            System.out.println("6.View customer purchase history");
+            System.out.println("7.Exit");
             System.out.print("Choose an option: ");
             String number = sc.nextLine();
 
@@ -584,6 +585,65 @@ public class Manager {
 
 
             } else if (number.equals("6")) {
+                System.out.print("Enter customer name: ");
+                String customerName = sc.nextLine();
+                
+                System.out.print("Enter store name: ");
+                String storeName = sc.nextLine();
+
+                Socket requestSocket = null;
+                ObjectOutputStream out = null;
+                ObjectInputStream in = null;
+                try {
+                    // Connect to master
+                    requestSocket = new Socket("localhost", 4321);
+                    out = new ObjectOutputStream(requestSocket.getOutputStream());
+                    in = new ObjectInputStream(requestSocket.getInputStream());
+
+                    // Send to master
+                    out.writeObject("customerPurchasesByStore");
+                    out.flush();
+
+                    out.writeObject(customerName);
+                    out.flush();
+
+                    out.writeObject(storeName);
+                    out.flush();
+
+                    // Receive from master
+                    Map<String, Integer> result = (Map<String, Integer>) in.readObject();
+
+                    System.out.println("\nPurchase History for Customer: " + customerName + " at Store: " + storeName);
+                    if (result.isEmpty()) {
+                        System.out.println("No purchases found for this customer at this store.");
+                    } else {
+                        System.out.println("Products purchased:");
+                        int totalItems = 0;
+                        for (Map.Entry<String, Integer> entry : result.entrySet()) {
+                            System.out.println("• " + entry.getKey() + ": " + entry.getValue() + " items");
+                            totalItems += entry.getValue();
+                        }
+                        System.out.println("Total items purchased: " + totalItems);
+                    }
+                    System.out.println();
+
+                } catch (UnknownHostException unknownHost) {
+                    System.err.println("You are trying to connect to an unknown host!");
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                } catch (ClassNotFoundException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    try {
+                        if (in != null) in.close();
+                        if (out != null) out.close();
+                        if (requestSocket != null) requestSocket.close();
+                    } catch (IOException ioException) {
+                        ioException.printStackTrace();
+                    }
+                }
+
+            } else if (number.equals("7")) {
                 System.out.println("Exit");
                 flag = false;
             } else {
