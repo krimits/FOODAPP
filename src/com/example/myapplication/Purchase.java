@@ -3,6 +3,7 @@ import java.io.Serializable;
 import java.util.*;
 
 public class Purchase implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String customerName;
     private String customerEmail;
     private ArrayList<Product> purchasedProducts;

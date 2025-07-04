@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.*;
 
 public class Store implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private String storeName;
     private double latitude;
