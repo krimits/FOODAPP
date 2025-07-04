@@ -5,10 +5,10 @@ import java.text.ParseException;
 import java.util.*;
 
 public class Actions extends Thread {
-    ObjectInputStream in;
-    ObjectOutputStream out;
-    String[][] workers; // Stores IP and port info for worker nodes
-    int counterID;
+    private ObjectInputStream in;
+    private ObjectOutputStream out;
+    private String[][] workers; // Stores IP and port info for worker nodes
+    private int counterID;
 
     public Actions(Socket connection, String[][] workers, int counterID) {
         try {
@@ -21,6 +21,7 @@ public class Actions extends Thread {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void run() {
         try {
             String role = (String) in.readObject(); // Read the role of the request
@@ -228,7 +229,7 @@ public class Actions extends Thread {
                 // Receive from manager
                 String storeName = (String) in.readObject();
                 String ProductName = (String) in.readObject();
-                int amount = (int) in.readInt();
+                int amount = in.readInt();
 
                 Socket workerSocket = null;
                 ObjectOutputStream outWorker = null;
@@ -379,7 +380,7 @@ public class Actions extends Thread {
                 // Receive from manager
                 String storeName = (String) in.readObject();
                 String ProductName = (String) in.readObject();
-                int amount = (int) in.readInt();
+                int amount = in.readInt();
 
                 Socket workerSocket = null;
                 ObjectOutputStream outWorker = null;

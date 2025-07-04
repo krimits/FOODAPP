@@ -5,6 +5,7 @@ import java.net.UnknownHostException;
 import java.util.*;
 
 public class Client {
+    @SuppressWarnings("unchecked")
     public static void main(String[] args) throws IOException {
         Scanner sc = new Scanner(System.in);
         String clientId = UUID.randomUUID().toString();

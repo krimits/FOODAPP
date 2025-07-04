@@ -1,13 +1,11 @@
 package com.example.myapplication;
-import java.awt.print.Book;
 import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class
-WorkerActions extends Thread {
-    ObjectInputStream in;
-    ObjectOutputStream out;
+public class WorkerActions extends Thread {
+    private ObjectInputStream in;
+    private ObjectOutputStream out;
     private final ArrayList<Store> stores;
     private final Object lock;
     private final Socket connection;
@@ -128,7 +126,7 @@ WorkerActions extends Thread {
                 // Receive from master
                 String storeName = (String) in.readObject();
                 String ProductName = (String) in.readObject();
-                int amount = (int) in.readInt();
+                int amount = in.readInt();
 
                 synchronized (lock) {
                     for (Store store : stores) {
@@ -202,7 +200,7 @@ WorkerActions extends Thread {
                 // Receive from master
                 String storeName = (String) in.readObject();
                 String ProductName = (String) in.readObject();
-                int amount = (int) in.readInt();
+                int amount = in.readInt();
 
                 synchronized (lock) {
                     for (Store store : stores) {

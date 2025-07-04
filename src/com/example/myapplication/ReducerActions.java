@@ -22,6 +22,7 @@ public class ReducerActions extends Thread {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void run() {
         try {
